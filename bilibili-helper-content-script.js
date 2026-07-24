@@ -188,6 +188,7 @@ var b0 = (() => {
     off(e, i) {
       e === "log" ? this.#o = this.#o.filter(d => d !== i) : e === "progress" && (this.#t = this.#t.filter(d => d !== i))
     }
+    load = (e = {}) => (
       this.#e || (this.#e = new Worker(
         new URL("./worker.js", import.meta.url),
         {
