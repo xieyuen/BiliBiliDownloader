@@ -1,0 +1,31 @@
+{
+   "action": {
+      "default_popup": "popup.html",
+      "default_title": "B站下载助手"
+   },
+   "content_scripts": [ {
+      "all_frames": false,
+      "js": [ "bilibili-helper-content-script-seed.js" ],
+      "matches": [ "http://*.bilibili.com/*", "https://*.bilibili.com/*" ],
+      "run_at": "document_start"
+   } ],
+   "content_security_policy": {
+      "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+   },
+   "description": "bilibili 哔哩哔哩 B站 下载助手 帮你下载版权受限（能看不能缓存）的 番剧 电影 影视 电视剧 等 视频",
+   "icons": {
+      "128": "icon.png",
+      "16": "icon.png",
+      "48": "icon.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv7QE0G78lKilRcclwZZZWuYyStmZ+HceagIp2+um8dl3l8FImVR5m3AMeFtIhH6Qzm3WEThbO5smUu3s8sznw3+m8r7XZV/kyVa4qUc2fUBywZZuN7lBHiQmkBEwNSyDoAmpBQur2LLgjYbMe4sDOPbhCs3RXZLRhf4QD0uNQOx22KgDKb3N/xnrS+22mJqNFzfc6gTI+K6K0lfpR/s8N4+6slASJdcBf/9uC6IlOtx/25Gv668LvQ+vodvmHwS1iXAFmL7Ejrm+Eyh3S4Y4l3oYALBi7RSqEU/ZAVpokth2rKpxxdXErsNfsRoremVN/1bykeqhJ/5srtUoqD6lXQIDAQAB",
+   "manifest_version": 3,
+   "name": "bilibili哔哩哔哩下载助手",
+   "offline_enabled": true,
+   "update_url": "https://edge.microsoft.com/extensionwebstorebase/v1/crx",
+   "version": "3.0.4",
+   "web_accessible_resources": [ {
+      "matches": [ "http://*.bilibili.com/*", "https://*.bilibili.com/*" ],
+      "resources": [ "*.js", "*.css", "*.png", "*.webp", "*.json", "*.html", "*.wasm" ]
+   } ]
+}
