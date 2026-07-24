@@ -16,3 +16,7 @@
 > 高级模式下载失败请尝试兼容模式
 >
 > 遇到问题请先看[使用教程和常见问题解答](https://docs.qq.com/doc/DQ2lhaWRpS0tubVVF)
+
+作者打赏码:
+
+![打赏作者](https://csser.top/bilibili/img/zanshang.webp)
