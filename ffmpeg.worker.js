@@ -1,1 +1,143 @@
-var i="0.12.1",f=`https://unpkg.com/@ffmpeg/core@${i}/dist/umd/ffmpeg-core.js`,R;(function(r){r.LOAD="LOAD",r.EXEC="EXEC",r.WRITE_FILE="WRITE_FILE",r.READ_FILE="READ_FILE",r.DELETE_FILE="DELETE_FILE",r.RENAME="RENAME",r.CREATE_DIR="CREATE_DIR",r.LIST_DIR="LIST_DIR",r.DELETE_DIR="DELETE_DIR",r.ERROR="ERROR",r.DOWNLOAD="DOWNLOAD",r.PROGRESS="PROGRESS",r.LOG="LOG"})(R||(R={}));var D=new Error("unknown message type"),L=new Error("ffmpeg is not loaded, call `await ffmpeg.load()` first"),d=new Error("called FFmpeg.terminate()"),l=new Error("failed to import ffmpeg-core.js"),t,O=async({coreURL:r=f,wasmURL:a,workerURL:E})=>{let s=!t,e=r,o=a||r.replace(/.js$/g,".wasm"),c=E||r.replace(/.js$/g,".worker.js");try{importScripts(e)}catch{if(self.createFFmpegCore=(await import(e)).default,!self.createFFmpegCore)throw l}return t=await self.createFFmpegCore({mainScriptUrlOrBlob:`${e}#${btoa(JSON.stringify({wasmURL:o,workerURL:c}))}`}),t.setLogger(n=>self.postMessage({type:R.LOG,data:n})),t.setProgress(n=>self.postMessage({type:R.PROGRESS,data:n})),s},m=({args:r,timeout:a=-1})=>{t.setTimeout(a),t.exec(...r);let E=t.ret;return t.reset(),E},I=({path:r,data:a})=>(t.FS.writeFile(r,a),!0),u=({path:r,encoding:a})=>t.FS.readFile(r,{encoding:a}),S=({path:r})=>(t.FS.unlink(r),!0),A=({oldPath:r,newPath:a})=>(t.FS.rename(r,a),!0),w=({path:r})=>(t.FS.mkdir(r),!0),v=({path:r})=>{let a=t.FS.readdir(r),E=[];for(let s of a){let e=t.FS.stat(`${r}/${s}`),o=t.FS.isDir(e.mode);E.push({name:s,isDir:o})}return E},_=({path:r})=>(t.FS.rmdir(r),!0);self.onmessage=async({data:{id:r,type:a,data:E}})=>{let s=[],e;try{if(a!==R.LOAD&&!t)throw L;switch(a){case R.LOAD:e=await O(E);break;case R.EXEC:e=m(E);break;case R.WRITE_FILE:e=I(E);break;case R.READ_FILE:e=u(E);break;case R.DELETE_FILE:e=S(E);break;case R.RENAME:e=A(E);break;case R.CREATE_DIR:e=w(E);break;case R.LIST_DIR:e=v(E);break;case R.DELETE_DIR:e=_(E);break;default:throw D}}catch(o){self.postMessage({id:r,type:R.ERROR,data:o.toString()});return}e instanceof Uint8Array&&s.push(e.buffer),self.postMessage({id:r,type:a,data:e},s)};
+var VERSION = "0.12.1";
+var DEFAULT_CORE_URL = `https://unpkg.com/@ffmpeg/core@${VERSION}/dist/umd/ffmpeg-core.js`;
+
+var MessageType;
+(function (m) {
+  m.LOAD = "LOAD";
+  m.EXEC = "EXEC";
+  m.WRITE_FILE = "WRITE_FILE";
+  m.READ_FILE = "READ_FILE";
+  m.DELETE_FILE = "DELETE_FILE";
+  m.RENAME = "RENAME";
+  m.CREATE_DIR = "CREATE_DIR";
+  m.LIST_DIR = "LIST_DIR";
+  m.DELETE_DIR = "DELETE_DIR";
+  m.ERROR = "ERROR";
+  m.DOWNLOAD = "DOWNLOAD";
+  m.PROGRESS = "PROGRESS";
+  m.LOG = "LOG";
+})(MessageType || (MessageType = {}));
+
+var UnknownMessageError = new Error("unknown message type");
+var NotLoadedError = new Error("ffmpeg is not loaded, call `await ffmpeg.load()` first");
+var TerminatedError = new Error("called FFmpeg.terminate()");
+var ImportError = new Error("failed to import ffmpeg-core.js");
+
+var coreInstance = null;
+
+var loadCore = async function ({ coreURL = DEFAULT_CORE_URL, wasmURL, workerURL } = {}) {
+  var initial = !coreInstance;
+  var coreScript = coreURL;
+  var wasm = wasmURL || coreURL.replace(/.js$/g, ".wasm");
+  var worker = workerURL || coreURL.replace(/.js$/g, ".worker.js");
+
+  try {
+    importScripts(coreScript);
+  } catch (e) {
+    var mod = await import(coreScript);
+    if (!mod.default) throw ImportError;
+    self.createFFmpegCore = mod.default;
+  }
+
+  coreInstance = await self.createFFmpegCore({
+    mainScriptUrlOrBlob: `${coreScript}#${btoa(JSON.stringify({ wasmURL: wasm, workerURL: worker }))}`
+  });
+
+  coreInstance.setLogger(n => self.postMessage({ type: MessageType.LOG, data: n }));
+  coreInstance.setProgress(n => self.postMessage({ type: MessageType.PROGRESS, data: n }));
+
+  return coreInstance;
+};
+
+function exec({ args, timeout = -1 }) {
+  coreInstance.setTimeout(timeout);
+  coreInstance.exec(...args);
+  var ret = coreInstance.ret;
+  coreInstance.reset();
+  return ret;
+}
+
+function writeFile({ path, data }) {
+  coreInstance.FS.writeFile(path, data);
+  return true;
+}
+
+function readFile({ path, encoding }) {
+  return coreInstance.FS.readFile(path, { encoding });
+}
+
+function deleteFile({ path }) {
+  coreInstance.FS.unlink(path);
+  return true;
+}
+
+function rename({ oldPath, newPath }) {
+  coreInstance.FS.rename(oldPath, newPath);
+  return true;
+}
+
+function createDir({ path }) {
+  coreInstance.FS.mkdir(path);
+  return true;
+}
+
+function listDir({ path }) {
+  var entries = coreInstance.FS.readdir(path);
+  var result = [];
+  for (var name of entries) {
+    var stat = coreInstance.FS.stat(`${path}/${name}`);
+    var isDir = coreInstance.FS.isDir(stat.mode);
+    result.push({ name: name, isDir: isDir });
+  }
+  return result;
+}
+
+function deleteDir({ path }) {
+  coreInstance.FS.rmdir(path);
+  return true;
+}
+
+self.onmessage = async function ({ data: { id, type, data } }) {
+  var transfer = [];
+  var result;
+  try {
+    if (type !== MessageType.LOAD && !coreInstance) throw NotLoadedError;
+    switch (type) {
+      case MessageType.LOAD:
+        result = await loadCore(data);
+        break;
+      case MessageType.EXEC:
+        result = exec(data);
+        break;
+      case MessageType.WRITE_FILE:
+        result = writeFile(data);
+        break;
+      case MessageType.READ_FILE:
+        result = readFile(data);
+        break;
+      case MessageType.DELETE_FILE:
+        result = deleteFile(data);
+        break;
+      case MessageType.RENAME:
+        result = rename(data);
+        break;
+      case MessageType.CREATE_DIR:
+        result = createDir(data);
+        break;
+      case MessageType.LIST_DIR:
+        result = listDir(data);
+        break;
+      case MessageType.DELETE_DIR:
+        result = deleteDir(data);
+        break;
+      default:
+        throw UnknownMessageError;
+    }
+  } catch (err) {
+    self.postMessage({ id: id, type: MessageType.ERROR, data: err.toString() });
+    return;
+  }
+
+  if (result instanceof Uint8Array) transfer.push(result.buffer);
+  self.postMessage({ id: id, type: type, data: result }, transfer);
+};
